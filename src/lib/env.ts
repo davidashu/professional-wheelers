@@ -45,6 +45,11 @@ export const serverEnv = {
   get resendWebhookSecret() {
     return process.env.RESEND_WEBHOOK_SECRET || null;
   },
+  /** Bearer secret for /api/cron/* (Vercel Cron sends it automatically). */
+  get cronSecret() {
+    const s = process.env.CRON_SECRET;
+    return s && s.length >= 32 ? s : null;
+  },
   get emailConfigured() {
     return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
   },

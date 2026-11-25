@@ -38,6 +38,7 @@ export function TeamMemberForm({ member }: { member: Profile }) {
       <label className="sr-only" htmlFor={`role-${member.id}`}>Role</label>
       <select id={`role-${member.id}`} name="role" defaultValue={member.role} className={`${inputClass} w-auto`}>
         <option value="sales">Sales</option>
+        <option value="dispatch">Dispatch</option>
         <option value="admin">Admin</option>
       </select>
       <label className="sr-only" htmlFor={`active-${member.id}`}>Access</label>
@@ -59,7 +60,7 @@ export function AddTeammateForm() {
         <div><Label htmlFor="t-email">Email</Label><input id="t-email" name="email" type="email" className={inputClass} required /></div>
         <div>
           <Label htmlFor="t-role">Role</Label>
-          <select id="t-role" name="role" defaultValue="sales" className={inputClass}><option value="sales">Sales</option><option value="admin">Admin</option></select>
+          <select id="t-role" name="role" defaultValue="sales" className={inputClass}><option value="sales">Sales</option><option value="dispatch">Dispatch</option><option value="admin">Admin</option></select>
         </div>
         <div><Label htmlFor="t-pass">Temporary password</Label><input id="t-pass" name="password" type="password" minLength={12} autoComplete="new-password" className={inputClass} required /></div>
       </div>

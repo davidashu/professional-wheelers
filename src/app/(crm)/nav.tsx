@@ -4,18 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cx } from "@/components/ui";
 
-const items = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/leads", label: "Leads" },
-  { href: "/pipeline", label: "Pipeline" },
-  { href: "/follow-ups", label: "Follow-ups" },
-  { href: "/customers", label: "Customers" },
-  { href: "/bookings", label: "Bookings" },
+type Item = { href: string; label: string; roles: Array<"admin" | "sales" | "dispatch">; section: "CRM" | "TMS" | "Admin" };
+
+const items: Item[] = [
+  { href: "/dashboard", label: "Dashboard", roles: ["admin", "sales"], section: "CRM" },
+  { href: "/tasks", label: "Tasks", roles: ["admin", "sales", "dispatch"], section: "CRM" },
+  { href: "/customers", label: "Customers", roles: ["admin", "sales"], section: "CRM" },
+  { href: "/leads", label: "Leads", roles: ["admin", "sales"], section: "CRM" },
+  { href: "/pipeline", label: "Pipeline", roles: ["admin", "sales"], section: "CRM" },
+  { href: "/follow-ups", label: "Follow-ups", roles: ["admin", "sales"], section: "CRM" },
+  { href: "/quote-orders", label: "Quote orders", roles: ["admin", "sales"], section: "TMS" },
+  { href: "/loads", label: "Loads", roles: ["admin", "sales", "dispatch"], section: "TMS" },
+  { href: "/carriers", label: "Carriers", roles: ["admin", "sales", "dispatch"], section: "TMS" },
+  { href: "/bookings", label: "Web bookings", roles: ["admin", "sales"], section: "TMS" },
+  { href: "/sequences", label: "Sequences", roles: ["admin"], section: "Admin" },
+  { href: "/settings", label: "Settings", roles: ["admin"], section: "Admin" },
 ];
 
-export function Nav({ isAdmin }: { isAdmin: boolean }) {
+export function Nav({ role }: { role: "admin" | "sales" | "dispatch" }) {
   const pathname = usePathname();
-  const all = isAdmin ? [...items, { href: "/settings", label: "Settings" }] : items;
+  const all = items.filter((i) => i.roles.includes(role));
   return (
     <nav aria-label="Main" className="flex gap-1 overflow-x-auto px-2 pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
       {all.map((item) => {

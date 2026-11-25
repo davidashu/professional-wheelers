@@ -32,7 +32,7 @@ export default async function SettingsPage() {
         </Card>
       </div>
       <Card className="mt-6">
-        <CardHeader title="Team" description="Admins manage team and settings. Sales reps work leads, quotes and bookings." />
+        <CardHeader title="Team" description="Admins manage team and settings. Sales reps work their own customers, leads, quotes and loads. Dispatch works the loads assigned to them in the TMS." />
         <div className="overflow-x-auto">
           <table className={tableClass}>
             <thead className="bg-slate-50"><tr><th className={thClass}>Name</th><th className={thClass}>Email</th><th className={thClass}>Role and access</th></tr></thead>
