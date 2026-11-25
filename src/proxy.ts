@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * routes to /login. Authorization (role checks) is enforced again on the
  * server in every page and action, and by Postgres RLS.
  */
-const CRM_PREFIXES = ["/dashboard", "/leads", "/pipeline", "/follow-ups", "/customers", "/bookings", "/settings"];
+const CRM_PREFIXES = ["/dashboard", "/leads", "/pipeline", "/follow-ups", "/customers", "/bookings", "/messages", "/settings"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -42,5 +42,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|q/|get-a-quote|api/webhooks).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|q/|get-a-quote|portal|api/webhooks).*)"],
 };

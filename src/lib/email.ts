@@ -53,26 +53,27 @@ export function quoteEmailContent(i: QuoteEmailInput) {
   return { subject, text, html };
 }
 
+export type EmailMessage = { to: string; subject: string; text: string; html: string; idempotencyKey: string };
+
 /** Sends via Resend's REST API. Returns the provider's message id on success. */
-export async function sendQuoteEmail(input: QuoteEmailInput): Promise<SendResult> {
+export async function sendEmail(msg: EmailMessage): Promise<SendResult> {
   const apiKey = serverEnv.resendApiKey;
   const from = serverEnv.emailFrom;
   if (!apiKey || !from) return { ok: false, error: "Email provider is not configured" };
-  const { subject, text, html } = quoteEmailContent(input);
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "Idempotency-Key": input.idempotencyKey,
+        "Idempotency-Key": msg.idempotencyKey,
       },
       body: JSON.stringify({
         from,
-        to: [input.to],
-        subject,
-        text,
-        html,
+        to: [msg.to],
+        subject: msg.subject,
+        text: msg.text,
+        html: msg.html,
         ...(serverEnv.emailReplyTo ? { reply_to: serverEnv.emailReplyTo } : {}),
       }),
       signal: AbortSignal.timeout(15000),
@@ -85,6 +86,51 @@ export async function sendQuoteEmail(input: QuoteEmailInput): Promise<SendResult
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Network error contacting email provider" };
   }
+}
+
+export async function sendQuoteEmail(input: QuoteEmailInput): Promise<SendResult> {
+  const { subject, text, html } = quoteEmailContent(input);
+  return sendEmail({ to: input.to, subject, text, html, idempotencyKey: input.idempotencyKey });
+}
+
+function simpleEmail(opts: { greeting: string; paragraphs: string[]; button: { label: string; url: string }; footer: string }) {
+  const text = [opts.greeting, "", ...opts.paragraphs.flatMap((p) => [p, ""]), `${opts.button.label}: ${opts.button.url}`, "", opts.footer].join("\n");
+  const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.5;max-width:560px;margin:0 auto;padding:24px">
+<p>${esc(opts.greeting)}</p>
+${opts.paragraphs.map((p) => `<p>${esc(p)}</p>`).join("\n")}
+<p><a href="${esc(opts.button.url)}" style="display:inline-block;background:#0f766e;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">${esc(opts.button.label)}</a></p>
+<p style="color:#64748b;font-size:13px">${esc(opts.footer)}</p>
+</body></html>`;
+  return { text, html };
+}
+
+const firstName = (name: string) => name.trim().split(/\s+/)[0] || "there";
+
+/** One-time sign-in link for the customer portal. */
+export function portalLoginEmailContent(i: { customerName: string; companyName: string; link: string }) {
+  const subject = `Your sign-in link for ${i.companyName}`;
+  const body = simpleEmail({
+    greeting: `Hi ${firstName(i.customerName)},`,
+    paragraphs: [
+      `Use the button below to sign in to your ${i.companyName} customer portal. There you can see your quotes, bookings and shipment status, and message our team.`,
+      "The link works once and expires in 30 minutes.",
+    ],
+    button: { label: "Sign in to your portal", url: i.link },
+    footer: "If you didn't ask for this, you can ignore this email.",
+  });
+  return { subject, ...body };
+}
+
+/** Notice that staff replied in the portal. The message text itself stays in the portal. */
+export function newMessageEmailContent(i: { customerName: string; companyName: string; staffName: string; link: string }) {
+  const subject = `New message from ${i.companyName}`;
+  const body = simpleEmail({
+    greeting: `Hi ${firstName(i.customerName)},`,
+    paragraphs: [`${i.staffName} from ${i.companyName} sent you a message about your vehicle shipment.`],
+    button: { label: "Read and reply", url: i.link },
+    footer: "This link signs you in to your customer portal and expires in 7 days. Please don't forward it.",
+  });
+  return { subject, ...body };
 }
 
 /**

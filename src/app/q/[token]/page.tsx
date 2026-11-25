@@ -4,8 +4,10 @@ import { formatDate, formatDateTime, money } from "@/lib/format";
 import { hashToken, isWellFormedToken } from "@/lib/tokens";
 import type { PublicQuote } from "@/lib/types";
 import { Badge } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { RespondForms } from "./respond-forms";
 import { BookingDetailsForm } from "./booking-details-form";
+import { openPortalFromQuote } from "@/app/portal/actions";
 
 export const metadata: Metadata = {
   title: "Your vehicle shipping quote",
@@ -129,6 +131,15 @@ export default async function PublicQuotePage({ params }: { params: Promise<{ to
           </div>
         )}
       </div>
+
+      <form action={openPortalFromQuote} className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-4 ring-1 ring-slate-200">
+        <input type="hidden" name="token" value={token} />
+        <div className="text-sm">
+          <p className="font-semibold text-slate-900">Your customer portal</p>
+          <p className="text-slate-600">See all your quotes and bookings, track your shipment and message our team.</p>
+        </div>
+        <SubmitButton variant="secondary" pendingText="Opening…">Open my customer portal</SubmitButton>
+      </form>
     </Shell>
   );
 }

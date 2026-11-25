@@ -25,7 +25,7 @@ export COMPANY_NAME="Summit Auto Transport"
 unset RESEND_API_KEY EMAIL_FROM
 
 npx next build > /tmp/next-build.log 2>&1
-npx next start -p 3100 > /tmp/next-e2e.log 2>&1 &
+node node_modules/next/dist/bin/next start -p 3100 > /tmp/next-e2e.log 2>&1 &
 APP=$!
 for i in $(seq 1 30); do curl -sf http://localhost:3100/get-a-quote > /dev/null && break; sleep 1; done
 E2E_BASE_URL=http://localhost:3100 npx playwright test --trace off "$@"

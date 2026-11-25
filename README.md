@@ -16,6 +16,9 @@ Built with Next.js 16 (App Router), TypeScript, Tailwind CSS v4 and Supabase (Po
 | **Quote builder** | Carrier pay + broker fee = customer total, with profit shown to staff only. Expiry date, terms, revisions and version history. Only the latest valid version can be accepted. |
 | **Customer quote link** (`/q/<token>`) | Secure link that expires and shows no internal pricing (no carrier pay, no fee). Staff can copy it, or email it when Resend is set up, and the delivery status is tracked. Accept and decline are idempotent, and acceptance creates exactly one booking, even with two tabs open. |
 | **Customer booking portal** | After accepting, the customer uses the same link to enter full pickup and delivery addresses and contacts, then signs the booking agreement. The signed text, name and time are frozen. The agreement text is placeholder wording; admins replace it under **Settings**. |
+| **Home page** (`/`) | Two entry points: **Customer portal** and **Broker portal**, plus "Get a free quote". |
+| **Customer portal** (`/portal`) | Customers sign in without a password: a one-time link emailed to them (needs Resend), a 7-day link a staff member copies for them, or the **Open my customer portal** button on any quote link. They see every shipment request, the current quote with a link to accept it, bookings with a shipment progress bar, and a chat with the team. Never shows carrier pay, broker fee, internal notes or lost reasons. |
+| **Messages** | One conversation per customer, optionally tagged to a shipment. Staff reply from the **Messages** inbox (with unread counts in the nav) or from the panel on each lead and customer page, and can email the customer a "new message" notice with a sign-in link. Pages refresh every 15 to 20 seconds while open. |
 | **Bookings** | Addresses, contacts, notes, carrier, and status Awaiting Carrier → Carrier Assigned → Picked Up → Delivered. Terms copied from the accepted quote can't be edited. |
 | **Roles** | Admin (team, settings, agreement text, everything else) and Sales. Roles are checked on the server and enforced again by Postgres RLS. |
 | **Timeline** | Database triggers log every significant change: stage moves, quotes, emails, acceptance, bookings and agreement signatures. |
@@ -28,6 +31,7 @@ Built with Next.js 16 (App Router), TypeScript, Tailwind CSS v4 and Supabase (Po
 - Customer links are `HMAC-SHA256(QUOTE_LINK_SECRET, link id)`. The database stores only a SHA-256 hash of the token, so a database leak doesn't expose working links.
 - Workflow rules live in the database: Booked only through acceptance, Lost only with a reason, one booking per quote, immutable booking terms and signatures.
 - Visitor IP addresses are stored only as keyed hashes.
+- Customers are not Supabase Auth users. A portal session is a random 256-bit token in an httpOnly cookie; the database stores only its SHA-256 hash, and every portal function resolves the customer from that hash before returning anything. Sessions last 30 days and end on sign-out. Email sign-in links work once and expire after 30 minutes; staff-copied links last 7 days. Sign-in requests are rate-limited per IP and per customer, and the reply never reveals whether an email is on file.
 
 ## Setup
 
@@ -54,7 +58,7 @@ supabase link --project-ref <your-project-ref>
 supabase db push                 # applies supabase/migrations
 ```
 
-Without the CLI, run the four files in `supabase/migrations/` in order in the Supabase SQL editor.
+Without the CLI, run the files in `supabase/migrations/` in order in the Supabase SQL editor.
 
 **Demo data (test projects only):** run `supabase/seed.sql` in the SQL editor. It creates 13 leads across every stage, quotes, 3 bookings and three demo staff users, all with the password `DemoPassw0rd!`:
 
@@ -90,6 +94,8 @@ Without email settings, staff copy the customer link and send it themselves. To 
 
 The quote page shows each email as Pending, Sent, Delivered, Bounced or Failed, based on what Resend reports.
 
+Email also powers customer portal sign-in links and "new message" notices. Without it, customers open the portal from their quote link, or staff copy a portal link from the customer's page.
+
 ### 6. Run
 
 ```bash
@@ -97,7 +103,7 @@ npm run dev        # http://localhost:3000
 npm run build && npm start
 ```
 
-`/get-a-quote` is the public form. Staff sign in at `/login`.
+`/` is the home page with both portal entry points. `/get-a-quote` is the public form. Customers sign in at `/portal/login`, staff at `/login`.
 
 ### 7. Booking agreement
 
@@ -110,7 +116,7 @@ Before customers sign anything, an admin should replace the placeholder text und
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript |
 | `npm run test:unit` | Pricing, tokens, spam checks, validation, email sending and webhook signatures |
-| `npm run test:db` | Database tests: RLS for each role, the workflow, quote acceptance under concurrency, expiry, link rotation, no price leaks, bookings, agreement signing |
+| `npm run test:db` | Database tests: RLS for each role, the workflow, quote acceptance under concurrency, expiry, link rotation, no price leaks, bookings, agreement signing, portal sign-in and sessions, message privacy |
 | `npm run test:e2e:local` | Builds the app and drives a browser through the whole flow |
 
 The database and browser tests need a plain PostgreSQL 15+ server, not Docker. They create throwaway databases, add a small stand-in for Supabase's `auth` schema (`supabase/tests/local_auth_stub.sql`), then apply the real migrations and seed. Point them at your server with `TEST_PG_URL` (default `postgres://postgres@localhost:54329`).
@@ -121,9 +127,10 @@ The database and browser tests need a plain PostgreSQL 15+ server, not Docker. T
 
 ```
 src/app/get-a-quote      public quote form
-src/app/q/[token]        customer quote link and booking portal
-src/app/(crm)            staff app: dashboard, leads, pipeline, follow-ups,
-                         customers, bookings, settings
+src/app/portal           customer portal: sign-in, shipments, messages
+src/app/q/[token]        customer quote link and booking details
+src/app/(crm)            broker portal: dashboard, leads, pipeline, follow-ups,
+                         customers, bookings, messages, settings
 src/app/api/webhooks     Resend delivery webhook
 src/lib                  env, auth, validation, pricing, tokens, email, data access
 supabase/migrations      schema, RLS policies, workflow functions, booking portal
