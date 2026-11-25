@@ -1,4 +1,6 @@
 import { requireStaff, displayName } from "@/lib/auth";
+import { serverEnv } from "@/lib/env";
+import { Wordmark } from "@/components/brand";
 import { Nav } from "./nav";
 
 export const metadata = { robots: { index: false, follow: false } };
@@ -7,17 +9,17 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
   const { profile } = await requireStaff();
   return (
     <div className="min-h-dvh lg:flex">
-      <aside className="border-b border-slate-800 bg-slate-900 text-slate-200 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-60 lg:shrink-0 lg:flex-col lg:border-b-0">
+      <aside className="border-b border-slate-200 bg-white text-slate-700 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-60 lg:shrink-0 lg:flex-col lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between px-4 py-4 lg:block">
-          <p className="text-sm font-bold tracking-tight text-white">Auto Transport CRM</p>
-          <p className="hidden text-xs text-slate-400 lg:mt-0.5 lg:block">Brokerage workspace</p>
+          <Wordmark name={serverEnv.companyName} className="text-ink" />
+          <p className="hidden pl-9 text-xs text-slate-500 lg:mt-0.5 lg:block">Broker workspace</p>
         </div>
         <Nav isAdmin={profile.role === "admin"} />
-        <div className="hidden border-t border-slate-800 px-4 py-4 lg:mt-auto lg:block">
-          <p className="truncate text-sm font-medium text-white">{displayName(profile)}</p>
-          <p className="text-xs capitalize text-slate-400">{profile.role}</p>
+        <div className="hidden border-t border-slate-200 px-4 py-4 lg:mt-auto lg:block">
+          <p className="truncate text-sm font-semibold text-ink">{displayName(profile)}</p>
+          <p className="text-xs capitalize text-slate-500">{profile.role}</p>
           <form action="/auth/signout" method="post" className="mt-3">
-            <button className="text-xs font-semibold text-slate-300 hover:text-white">Sign out</button>
+            <button className="text-xs font-semibold text-slate-600 hover:text-brand-700">Sign out</button>
           </form>
         </div>
       </aside>

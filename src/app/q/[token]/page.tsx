@@ -4,6 +4,8 @@ import { formatDate, formatDateTime, money } from "@/lib/format";
 import { hashToken, isWellFormedToken } from "@/lib/tokens";
 import type { PublicQuote } from "@/lib/types";
 import { Badge } from "@/components/ui";
+import { PublicShell } from "@/components/brand";
+import { serverEnv } from "@/lib/env";
 import { RespondForms } from "./respond-forms";
 import { BookingDetailsForm } from "./booking-details-form";
 
@@ -26,7 +28,7 @@ export default async function PublicQuotePage({ params }: { params: Promise<{ to
 
   if (!q) {
     return (
-      <Shell company="Vehicle shipping quote">
+      <Shell company={serverEnv.companyName}>
         <h1 className="text-xl font-bold text-slate-900">This link isn&apos;t valid</h1>
         <p className="mt-2 text-slate-600">Check that you copied the whole link from your email or text. If it still doesn&apos;t work, contact us and we&apos;ll resend your quote.</p>
       </Shell>
@@ -53,14 +55,14 @@ export default async function PublicQuotePage({ params }: { params: Promise<{ to
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm text-slate-500">Quote {q.reference}{q.version && q.version > 1 ? ` (revision ${q.version})` : ""}</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">{first ? `${first}, here's your quote` : "Your vehicle shipping quote"}</h1>
+          <h1 className="heading-display mt-1 text-2xl sm:text-3xl">{first ? `${first}, here's your quote` : "Your vehicle shipping quote"}</h1>
         </div>
         <StateBadge state={q.state} />
       </div>
 
-      <div className="mt-6 rounded-lg bg-slate-50 p-5 ring-1 ring-slate-200">
-        <p className="text-sm text-slate-600">Total price</p>
-        <p className="text-4xl font-bold tabular-nums text-slate-900" data-testid="public-total">{money(q.total)}</p>
+      <div className="mt-6 rounded-lg bg-brand-50 p-5 ring-1 ring-brand-100">
+        <p className="text-sm font-medium text-brand-700">Total price</p>
+        <p className="font-display text-4xl font-extrabold tabular-nums text-ink" data-testid="public-total">{money(q.total)}</p>
         <p className="mt-1 text-sm text-slate-600">All-in price for door-to-door transport.</p>
         {q.state === "active" && <p className="mt-2 text-sm font-medium text-amber-800">Valid until {formatDateTime(q.expires_at)}</p>}
       </div>
@@ -135,14 +137,9 @@ export default async function PublicQuotePage({ params }: { params: Promise<{ to
 
 function Shell({ company, children }: { company: string; children: React.ReactNode }) {
   return (
-    <div className="min-h-dvh bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-2xl px-4 py-4 text-base font-bold tracking-tight text-brand-800">{company}</div>
-      </header>
-      <main className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
-        <div className="rounded-lg bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-8">{children}</div>
-      </main>
-    </div>
+    <PublicShell company={company}>
+      <div className="rounded-xl bg-white p-5 shadow-xs ring-1 ring-slate-200 sm:mt-4 sm:p-8">{children}</div>
+    </PublicShell>
   );
 }
 

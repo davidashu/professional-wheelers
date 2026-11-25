@@ -42,7 +42,7 @@ alter table public.follow_ups disable trigger user;
 alter table public.lead_notes disable trigger user;
 alter table public.email_deliveries disable trigger user;
 
-update public.app_settings set company_name = 'Summit Auto Transport' where id = 1;
+update public.app_settings set company_name = 'Professional Wheelers' where id = 1;
 
 -- ---------------------------------------------------------------------------
 -- Customers

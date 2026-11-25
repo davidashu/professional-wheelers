@@ -47,7 +47,7 @@ export function quoteEmailContent(i: QuoteEmailInput) {
 <tr><td style="padding:4px 16px 4px 0;color:#475569">Pickup window</td><td style="padding:4px 0">${esc(pickupWindow(i.pickupWindowStart, i.pickupWindowEnd))}</td></tr>
 <tr><td style="padding:4px 16px 4px 0;color:#475569">Valid until</td><td style="padding:4px 0">${esc(formatDate(i.expiresAt))}</td></tr>
 </table>
-<p><a href="${esc(i.link)}" style="display:inline-block;background:#0f766e;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">Review your quote</a></p>
+<p><a href="${esc(i.link)}" style="display:inline-block;background:#2454e6;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:bold">Review your quote</a></p>
 <p style="color:#64748b;font-size:13px">Reference ${esc(i.reference)}. This link is personal to you; please don't forward it.</p>
 </body></html>`;
   return { subject, text, html };

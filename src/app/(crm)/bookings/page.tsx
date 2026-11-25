@@ -61,7 +61,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
 
 function FilterChip({ href, active, label, count }: { href: string; active: boolean; label: string; count: number }) {
   return (
-    <Link href={href} aria-current={active ? "page" : undefined} className={cx("rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset", active ? "bg-slate-900 text-white ring-slate-900" : "bg-white text-slate-700 ring-slate-300 hover:bg-slate-50")}>
+    <Link href={href} aria-current={active ? "page" : undefined} className={cx("rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset", active ? "bg-brand-600 text-white ring-brand-600" : "bg-white text-slate-700 ring-slate-300 hover:bg-slate-50")}>
       {label} <span className={active ? "text-slate-300" : "text-slate-400"}>{count}</span>
     </Link>
   );

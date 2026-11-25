@@ -59,15 +59,8 @@ test.describe.serial("public request → quote → acceptance → booking", () =
     await page.goto("/get-a-quote");
     await expect(page.getByRole("heading", { name: "Get a Vehicle Shipping Quote" })).toBeVisible();
 
-    // Server-side validation shows field errors (no client-side bypass needed)
+    // Step 1: route, date and transport type
     await page.waitForTimeout(3200);
-    await page.getByRole("button", { name: "Request my quote" }).click();
-    await expect(page.getByText("Please fix the highlighted fields.")).toBeVisible();
-    await expect(page.getByText("Name is required")).toBeVisible();
-
-    await page.getByLabel("Full name").fill("Erin Test");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Phone").fill("555-201-3344");
     await page.locator('input[name="pickup_city"]').fill("Reno");
     await page.locator('select[name="pickup_state"]').selectOption("NV");
     await page.locator('input[name="pickup_zip"]').fill("89501");
@@ -76,6 +69,12 @@ test.describe.serial("public request → quote → acceptance → booking", () =
     await page.locator('input[name="delivery_zip"]').fill("33602");
     const d = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
     await page.locator('input[name="earliest_pickup_date"]').fill(d);
+    await page.locator('input[name="transport_type"][value="enclosed"]').check();
+    await page.getByRole("button", { name: "Continue to vehicle" }).click();
+
+    // Step 2: vehicles. The step won't advance while a required field is empty.
+    await page.getByRole("button", { name: "Continue to contact" }).click();
+    await expect(page.locator('input[name="vehicles.0.year"]')).toBeFocused();
     await page.locator('input[name="vehicles.0.year"]').fill("2021");
     await page.locator('input[name="vehicles.0.make"]').fill("Ford");
     await page.locator('input[name="vehicles.0.model"]').fill("Bronco");
@@ -84,8 +83,17 @@ test.describe.serial("public request → quote → acceptance → booking", () =
     await page.locator('input[name="vehicles.1.make"]').fill("Chevrolet");
     await page.locator('input[name="vehicles.1.model"]').fill("Camaro");
     await page.locator('input[name="vehicles.1.operable"][value="no"]').check();
-    await page.locator('input[name="transport_type"][value="enclosed"]').check();
     await page.getByLabel(/Special instructions/).fill("Oversized tires on the Bronco; narrow driveway.");
+    await page.getByRole("button", { name: "Continue to contact" }).click();
+
+    // Step 3: submitting with empty contact fields shows the server's field errors
+    await page.getByRole("button", { name: "Request my quote" }).click();
+    await expect(page.getByText("Please fix the highlighted fields.")).toBeVisible();
+    await expect(page.getByText("Name is required")).toBeVisible();
+
+    await page.getByLabel("Full name").fill("Erin Test");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Phone").fill("555-201-3344");
 
     const submit = page.getByRole("button", { name: "Request my quote" });
     await submit.dblclick(); // double tap must not create two leads

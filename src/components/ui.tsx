@@ -9,7 +9,7 @@ type Variant = "primary" | "secondary" | "danger" | "ghost";
 type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-brand-700 text-white hover:bg-brand-800 shadow-sm disabled:bg-brand-700/60",
+  primary: "bg-accent-600 text-white hover:bg-accent-700 shadow-sm disabled:bg-accent-600/60",
   secondary: "bg-white text-slate-800 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 shadow-sm",
   danger: "bg-white text-red-700 ring-1 ring-inset ring-red-300 hover:bg-red-50",
   ghost: "text-slate-700 hover:bg-slate-100",
@@ -22,7 +22,7 @@ const sizes: Record<Size, string> = {
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra?: string) {
   return cx(
-    "inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors disabled:cursor-not-allowed",
+    "inline-flex items-center justify-center gap-2 rounded-[10px] font-semibold transition-colors disabled:cursor-not-allowed",
     variants[variant],
     sizes[size],
     extra,
@@ -75,7 +75,7 @@ export function Badge({ tone = "gray", children, className }: { tone?: Tone; chi
 
 export function Card({ children, className, ...rest }: ComponentProps<"section">) {
   return (
-    <section className={cx("rounded-lg bg-white shadow-sm ring-1 ring-slate-200", className)} {...rest}>
+    <section className={cx("rounded-xl bg-white shadow-xs ring-1 ring-slate-200", className)} {...rest}>
       {children}
     </section>
   );
@@ -97,7 +97,7 @@ export function PageHeader({ title, description, actions }: { title: ReactNode; 
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
+        <h1 className="heading-display text-2xl text-ink sm:text-3xl">{title}</h1>
         {description && <p className="mt-1 text-sm text-slate-600">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -131,7 +131,7 @@ export function Alert({ tone = "error", title, children }: { tone?: "error" | "s
 }
 
 export const inputClass =
-  "block w-full rounded-md border-0 bg-white px-3 py-2 text-base text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm aria-[invalid=true]:ring-red-500";
+  "block w-full rounded-md border-0 bg-white px-3 py-2 text-base text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-500 sm:text-sm aria-[invalid=true]:ring-red-500";
 
 export function Label({ htmlFor, children, optional }: { htmlFor: string; children: ReactNode; optional?: boolean }) {
   return (
