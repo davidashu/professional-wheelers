@@ -183,6 +183,61 @@ test.describe.serial("public request → quote → acceptance → booking", () =
     await ctx.close();
   });
 
+  test("customer opens the portal from the quote link and chats with staff", async ({ browser }) => {
+    const cctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const cust = await cctx.newPage();
+    const bodies = recordResponses(cust);
+    await cust.goto(new URL(quoteLink).pathname);
+    await cust.getByRole("button", { name: "Open my customer portal" }).click();
+    await cust.waitForURL("**/portal");
+    await expect(cust.getByRole("heading", { name: "Hi Erin" })).toBeVisible();
+    const card = cust.getByTestId(`shipment-${reference}`);
+    await expect(card).toContainText("Reno, NV");
+    await expect(card).toContainText("$1,555.65");
+    await expect(card).toContainText("Booked · finding a carrier");
+    await expect(card).toContainText("100 Main St Apt 4");
+
+    await card.getByRole("link", { name: "Message us about this shipment" }).click();
+    await expect(cust.getByRole("heading", { name: "Messages" })).toBeVisible();
+    await expect(cust.locator("#reference")).toHaveValue(reference);
+    await cust.fill("#body", "Can the driver call 30 minutes before pickup?");
+    await cust.getByRole("button", { name: "Send message" }).click();
+    await expect(cust.getByTestId("chat-message")).toContainText(["Can the driver call 30 minutes before pickup?"]);
+
+    // Staff see it as unread, reply from the inbox
+    const sctx = await browser.newContext();
+    const staff = await sctx.newPage();
+    await signIn(staff);
+    await expect(staff.getByRole("link", { name: /Messages/ })).toContainText("1");
+    await staff.goto("/messages");
+    await expect(staff.getByTestId("inbox")).toContainText("Erin Test");
+    await expect(staff.getByTestId("inbox")).toContainText("1 new");
+    await staff.getByTestId("inbox").getByText("Erin Test").click();
+    await expect(staff.getByTestId("chat-message").last()).toContainText("30 minutes before pickup");
+    await staff.getByPlaceholder("Reply to the customer…").fill("Yes, we'll ask the carrier to call ahead.");
+    await staff.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(staff.getByText(/Sent/).first()).toBeVisible();
+    // The lead page shows the same conversation
+    const [lead] = await query<{ id: string }>("select id from leads where reference = $1", [reference]);
+    await staff.goto(`/leads/${lead!.id}`);
+    await expect(staff.locator("#messages")).toContainText("call ahead");
+    await sctx.close();
+
+    await cust.reload();
+    await expect(cust.getByTestId("chat-message").last()).toContainText("call ahead");
+    await expect(cust.getByTestId("chat-message").last()).toContainText("Jordan");
+
+    await cust.waitForTimeout(500);
+    for (const b of bodies) expectNoInternalPricing(b);
+
+    // Sign out ends the session
+    await cust.getByRole("button", { name: "Sign out" }).click();
+    await cust.waitForURL("**/portal/login?signed_out=1");
+    await cust.goto("/portal");
+    await expect(cust).toHaveURL(/\/portal\/login/);
+    await cctx.close();
+  });
+
   test("staff see the booking with signed agreement and full timeline", async ({ page }) => {
     await signIn(page);
     const [b] = await query<{ id: string }>("select b.id from bookings b join leads l on l.id = b.lead_id where l.reference = $1", [reference]);

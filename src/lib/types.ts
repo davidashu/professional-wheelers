@@ -81,3 +81,37 @@ export type PublicBooking = {
   pickup_address: string | null; pickup_contact_name: string | null; pickup_contact_phone: string | null;
   delivery_address: string | null; delivery_contact_name: string | null; delivery_contact_phone: string | null;
 };
+
+export type PortalShipment = {
+  reference: string; created_at: string; status: LeadStatus; pickup: Place; delivery: Place;
+  earliest_pickup_date: string; pickup_date_flexible: boolean; transport_type: "open" | "enclosed";
+  vehicles: SnapshotVehicle[];
+  quote: {
+    version: number; state: "active" | "expired" | "accepted" | "declined"; total: number;
+    pickup_window_start: string; pickup_window_end: string; expires_at: string; sent_at: string;
+    responded_at: string | null; url: string | null;
+  } | null;
+  booking: {
+    reference: string; status: ShipmentStatus; total_price: string; carrier_assigned_at: string | null;
+    picked_up_at: string | null; delivered_at: string | null; details_submitted: boolean;
+    signed_name: string | null; signed_at: string | null; pickup_address: string | null; delivery_address: string | null;
+  } | null;
+};
+
+export type PortalOverview = {
+  company_name: string;
+  customer: { name: string; email: string | null; phone: string | null; company: string | null };
+  unread_messages: number;
+  shipments: PortalShipment[];
+};
+
+export type PortalMessage = {
+  id: string; body: string; from: "customer" | "staff"; staff_name: string | null; reference: string | null;
+  created_at: string; read_at: string | null;
+};
+
+export type Message = {
+  id: string; customer_id: string; lead_id: string | null; sender_type: "customer" | "staff"; sender_id: string | null;
+  body: string; created_at: string; read_at: string | null; email_status: "sent" | "failed" | "not_configured" | null;
+  email_error: string | null;
+};

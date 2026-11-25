@@ -16,6 +16,7 @@ import { QuoteBuilder } from "./quote-builder";
 import { QuoteRowActions } from "./quote-row-actions";
 import { AssignmentForm, FollowUpForm, CompleteFollowUpButton, LostForm, NoteForm, ReopenButton, StageForm } from "./lead-forms";
 import { Timeline } from "@/components/timeline";
+import { StaffConversation } from "@/components/staff-conversation";
 
 export const metadata: Metadata = { title: "Lead" };
 
@@ -38,7 +39,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
     supabase.from("activities").select("*").eq("lead_id", id).order("created_at", { ascending: false }).limit(200),
     supabase.from("email_deliveries").select("*").eq("lead_id", id).order("created_at", { ascending: false }),
     supabase.from("bookings").select("*").eq("lead_id", id).maybeSingle<Booking>(),
-    supabase.from("leads").select("id", { count: "exact", head: true }).eq("customer_id", lead.customer_id).neq("id", id),
+    supabase.from("leads").select("id, reference").eq("customer_id", lead.customer_id),
     getTeam(supabase),
     getSettings(supabase),
   ]);
@@ -50,6 +51,8 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const activities = must(activityRes, "activity") as Activity[];
   const emails = must(emailsRes, "emails") as EmailDelivery[];
   const booking = must(bookingRes, "booking");
+  const customerLeads = must(otherRes, "customer shipments") as Array<{ id: string; reference: string }>;
+  const otherCount = customerLeads.length - 1;
   const people = teamMap(team);
   const activeTeam = team.filter((t) => t.active).map((t) => ({ id: t.id, name: displayName(t) }));
 
@@ -219,6 +222,23 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
             </div>
           </Card>
 
+          <Card id="messages">
+            <CardHeader
+              title="Customer messages"
+              description="Chat with the customer through their portal. Customers never see internal notes or pricing details."
+            />
+            <StaffConversation
+              supabase={supabase}
+              customerId={customer.id}
+              customerEmail={customer.email}
+              leadId={lead.id}
+              people={people}
+              references={new Map(customerLeads.map((l) => [l.id, l.reference]))}
+              emailConfigured={serverEnv.emailConfigured}
+              refresh={false}
+            />
+          </Card>
+
           <Card>
             <CardHeader title="Activity timeline" description="Significant changes to this lead, its quotes and booking." />
             <Timeline activities={activities} people={people} />
@@ -237,9 +257,9 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
                   ["Company", lead.contact_company || "—"],
                 ]}
               />
-              {(otherRes.count ?? 0) > 0 && (
+              {otherCount > 0 && (
                 <p className="rounded bg-blue-50 px-3 py-2 text-xs text-blue-800">
-                  Repeat customer: {otherRes.count} other shipment{otherRes.count === 1 ? "" : "s"} on file.
+                  Repeat customer: {otherCount} other shipment{otherCount === 1 ? "" : "s"} on file.
                 </p>
               )}
               {customer.notes && <p className="text-xs text-slate-600">Customer note: {customer.notes}</p>}

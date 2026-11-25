@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { requireStaff } from "@/lib/auth";
-import { must, vehicleSummaries } from "@/lib/data";
+import { getTeam, must, teamMap, vehicleSummaries } from "@/lib/data";
 import { formatDate, money } from "@/lib/format";
 import type { Booking, Customer, Lead } from "@/lib/types";
 import { Card, CardHeader, EmptyState, LinkButton, PageHeader, tableClass, tdClass, thClass } from "@/components/ui";
 import { LeadStatusBadge, ShipmentStatusBadge } from "@/components/status";
 import { CustomerForm } from "./customer-form";
+import { StaffConversation } from "@/components/staff-conversation";
+import { serverEnv } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Customer" };
 
@@ -24,6 +26,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const leads = must(leadsRes, "shipments") as Lead[];
   const bookings = new Map((must(bookingsRes, "bookings") as Booking[]).map((b) => [b.lead_id, b]));
   const vehicles = await vehicleSummaries(supabase, leads.map((l) => l.id));
+  const team = await getTeam(supabase);
   const lifetime = [...bookings.values()].reduce((sum, b) => sum + Number(b.total_price), 0);
 
   return (
@@ -61,10 +64,25 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
             </div>
           )}
         </Card>
-        <Card>
-          <CardHeader title="Contact details" />
-          <div className="p-4"><CustomerForm customer={customer} /></div>
-        </Card>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader title="Contact details" />
+            <div className="p-4"><CustomerForm customer={customer} /></div>
+          </Card>
+          <Card id="messages">
+            <CardHeader title="Messages" description="Conversation with this customer in their portal." />
+            <StaffConversation
+              supabase={supabase}
+              customerId={customer.id}
+              customerEmail={customer.email}
+              leadId={leads.length === 1 ? leads[0]!.id : null}
+              people={teamMap(team)}
+              references={new Map(leads.map((l) => [l.id, l.reference]))}
+              emailConfigured={serverEnv.emailConfigured}
+              refresh={false}
+            />
+          </Card>
+        </div>
       </div>
     </div>
   );
