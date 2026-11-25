@@ -26,7 +26,7 @@ export async function updateSettings(_prev: ActionResult, fd: FormData): Promise
 
 const memberSchema = z.object({
   user_id: z.uuid(),
-  role: z.enum(["admin", "sales"]),
+  role: z.enum(["admin", "sales", "dispatch"]),
   active: z.enum(["true", "false"]).transform((v) => v === "true"),
 });
 
@@ -48,7 +48,7 @@ export async function updateTeamMember(_prev: ActionResult, fd: FormData): Promi
 const inviteSchema = z.object({
   full_name: z.string().trim().min(1, "Name is required").max(120),
   email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email")),
-  role: z.enum(["admin", "sales"]),
+  role: z.enum(["admin", "sales", "dispatch"]),
   password: z.string().min(12, "Temporary password must be at least 12 characters").max(72),
 });
 

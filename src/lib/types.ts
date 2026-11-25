@@ -1,10 +1,14 @@
 import type { EmailStatus, LeadSource, LeadStatus, QuoteStatus, ShipmentStatus } from "./labels";
 
-export type Profile = { id: string; email: string; full_name: string; role: "admin" | "sales"; active: boolean };
+export type Profile = {
+  id: string; email: string; full_name: string; role: "admin" | "sales" | "dispatch" | "customer"; active: boolean;
+  customer_id?: string | null;
+};
 
 export type Customer = {
   id: string; name: string; email: string | null; phone: string | null; company: string | null;
   notes: string | null; created_at: string; updated_at: string;
+  sales_rep_id?: string | null; billing_email?: string | null; payment_terms_days?: number; customer_type?: string | null;
 };
 
 export type Lead = {

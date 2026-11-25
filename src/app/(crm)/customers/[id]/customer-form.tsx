@@ -21,6 +21,20 @@ export function CustomerForm({ customer }: { customer: Customer }) {
           <input id={`c-${name}`} name={name} type={type} defaultValue={value} className={inputClass} required={name === "name"} />
         </div>
       ))}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="c-billing_email" optional>Billing email</Label>
+          <input id="c-billing_email" name="billing_email" type="email" defaultValue={customer.billing_email ?? ""} className={inputClass} />
+        </div>
+        <div>
+          <Label htmlFor="c-terms">Payment terms (days)</Label>
+          <input id="c-terms" name="payment_terms_days" type="number" min={0} max={120} defaultValue={customer.payment_terms_days ?? 0} className={inputClass} />
+        </div>
+      </div>
+      <div>
+        <Label htmlFor="c-type" optional>Type</Label>
+        <input id="c-type" name="customer_type" defaultValue={customer.customer_type ?? ""} placeholder="Dealer group, manufacturer, shipper…" className={inputClass} />
+      </div>
       <div>
         <Label htmlFor="c-notes" optional>Notes</Label>
         <textarea id="c-notes" name="notes" rows={3} defaultValue={customer.notes ?? ""} className={inputClass} />

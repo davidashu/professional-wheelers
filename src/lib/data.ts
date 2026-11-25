@@ -9,7 +9,11 @@ export function must<T>(res: { data: T | null; error: { message: string } | null
 }
 
 export async function getTeam(supabase: SupabaseClient): Promise<Profile[]> {
-  const res = await supabase.from("profiles").select("id, email, full_name, role, active").order("full_name");
+  const res = await supabase
+    .from("profiles")
+    .select("id, email, full_name, role, active, customer_id")
+    .neq("role", "customer")
+    .order("full_name");
   return must(res, "team") as Profile[];
 }
 

@@ -1,6 +1,6 @@
-# Professional Wheelers CRM
+# Professional Wheelers CRM + TMS
 
-A CRM for an auto transport brokerage. Customers request a quote on a public form, staff price it, the customer accepts through a secure link and fills in booking details, and staff hand the booking off to a carrier.
+A CRM and TMS on one platform for a freight and auto transport brokerage. Customers request a quote on a public form, staff price it, the customer accepts through a secure link and fills in booking details, and staff hand the booking off to a carrier.
 
 Built with Next.js 16 (App Router), TypeScript, Tailwind CSS v4 and Supabase (Postgres, Auth, Row Level Security).
 
@@ -17,7 +17,14 @@ Built with Next.js 16 (App Router), TypeScript, Tailwind CSS v4 and Supabase (Po
 | **Customer quote link** (`/q/<token>`) | Secure link that expires and shows no internal pricing (no carrier pay, no fee). Staff can copy it, or email it when Resend is set up, and the delivery status is tracked. Accept and decline are idempotent, and acceptance creates exactly one booking, even with two tabs open. |
 | **Customer booking portal** | After accepting, the customer uses the same link to enter full pickup and delivery addresses and contacts, then signs the booking agreement. The signed text, name and time are frozen. The agreement text is placeholder wording; admins replace it under **Settings**. |
 | **Bookings** | Addresses, contacts, notes, carrier, and status Awaiting Carrier → Carrier Assigned → Picked Up → Delivered. Terms copied from the accepted quote can't be edited. |
-| **Roles** | Admin (team, settings, agreement text, everything else) and Sales. Roles are checked on the server and enforced again by Postgres RLS. |
+| **Roles** | **Admin** sees everything. **Sales** sees only the customers and loads assigned to them. **Dispatch** uses only the TMS (loads, carriers) for loads assigned to them, and can't change customer rates or assignments. **Customer** logins only see their own portal. Roles are checked on the server and enforced again by Postgres RLS. |
+| **Loads (TMS)** | Every load has two status bars. The customer bar: Confirmed → Dispatched → Picked up → POD received → Delivered → Invoiced → Payment due → Paid / Customer paid, plus Pick up delayed, Running late, POD issue, Load issue and Cancelled. The carrier/billing bar: Not assigned → Assigned → Rate con signed → Picked up → Delivered → Invoice received → Paid, plus Issue. Customer rate, carrier rate, quick pay fee, adjustments and profit. Vehicles with VINs. Do-not-use carriers can't be assigned. |
+| **Quote orders** | Lanes posted for pricing by staff or by the customer in the portal. Posted → Quoted → Approved, Too high, Too low or Cancelled. Approving creates the load. |
+| **Carriers** | MC/DOT, standing (active, pending, do not use), insurance amounts and expiry, agreement date, lanes, load and profit history. |
+| **Invoices** | One live invoice per load, printable. Issuing and paying an invoice moves the customer bar automatically. |
+| **Tasks** | Assign to a person or to a position (Admin, Sales, Dispatch). A combined Tasks page in the left bar, plus a Tasks section on each customer and load. |
+| **Profit-drop sequences** | On the 1st of each month, each customer's gross profit is compared month over month. Rules: down 10–20% three months in a row; 20–40% two months in a row; 50%+ in one month (a month with no loads counts as −100%); 40–50% in one month; or 10%+ two months in a row with 30%+ combined. The most serious match creates one call task for the customer's sales rep (or the Admin position). Admins edit thresholds and task text under **Sequences**. |
+| **Customer portal** (`/portal`) | Customers track loads on their status bar, post lanes for quotes and answer them, and view and print invoices. It never shows carrier pay or profit. Admins add portal logins from the customer page. |
 | **Timeline** | Database triggers log every significant change: stage moves, quotes, emails, acceptance, bookings and agreement signatures. |
 
 ## Security model
@@ -78,7 +85,11 @@ update public.profiles set role = 'admin', active = true
  where id = (select id from auth.users where email = 'you@yourcompany.com');
 ```
 
-After that, admins add and deactivate staff from **Settings → Team** in the app.
+After that, admins add and deactivate staff (Admin, Sales or Dispatch) from **Settings → Team** in the app, and customer portal logins from each customer's page.
+
+### Monthly sequences
+
+`vercel.json` schedules `/api/cron/sequences` for 09:00 UTC on the 1st of each month. Set `CRON_SECRET` (32+ characters) in Vercel and Vercel Cron sends it as a bearer token. Admins can also run it by hand from **Sequences**; a customer never gets two tasks for the same month.
 
 ### 5. Email (optional)
 
