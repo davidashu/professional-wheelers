@@ -31,7 +31,7 @@ export const serverEnv = {
     return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   },
   get companyName() {
-    return process.env.COMPANY_NAME || "Auto Transport";
+    return process.env.COMPANY_NAME || "Professional Wheelers";
   },
   get resendApiKey() {
     return process.env.RESEND_API_KEY || null;

@@ -1,13 +1,44 @@
 @import "tailwindcss";
 
+/*
+ * Brand theme ("Clear Sky"): white space with one confident blue.
+ * Every page uses these tokens, so changing the look means editing this block
+ * (plus the display font in layout.tsx) rather than individual pages.
+ *   brand-*  : structural color (links, active nav, tinted panels, focus)
+ *   accent-* : primary actions and highlights. accent-600 is the button fill
+ *              (white text passes WCAG AA).
+ */
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --color-brand-50: #f0fdfa;
-  --color-brand-100: #ccfbf1;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
-  --color-ink: #0f172a;
+  --font-display: var(--font-display-face), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #eef3ff;
+  --color-brand-100: #dce6fe;
+  --color-brand-200: #bfd0fd;
+  --color-brand-300: #93b0fb;
+  --color-brand-400: #6088f5;
+  --color-brand-500: #3b67ee;
+  --color-brand-600: #2454e6;
+  --color-brand-700: #1d43c4;
+  --color-brand-800: #1d3a9e;
+  --color-brand-900: #1d347d;
+  --color-brand-950: #15214d;
+
+  --color-accent-50: #eef3ff;
+  --color-accent-100: #dce6fe;
+  --color-accent-500: #3b67ee;
+  --color-accent-600: #2454e6;
+  --color-accent-700: #1d43c4;
+
+  --color-ink: #101828;
+}
+
+/* Headline style for page titles and the public hero. */
+@utility heading-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
 }
 
 html {
@@ -15,17 +46,29 @@ html {
 }
 
 body {
-  background: #f8fafc;
+  background: #f7f8fb;
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
 
+h1,
+h2 {
+  text-wrap: balance;
+}
+
 /* Visible keyboard focus everywhere */
 :focus-visible {
-  outline: 2px solid var(--color-brand-600);
+  outline: 2px solid var(--color-accent-500);
   outline-offset: 2px;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }

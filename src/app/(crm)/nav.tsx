@@ -27,7 +27,7 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
             aria-current={active ? "page" : undefined}
             className={cx(
               "whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium",
-              active ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-800/60 hover:text-white",
+              active ? "bg-brand-50 font-semibold text-brand-700" : "text-slate-600 hover:bg-slate-100 hover:text-ink",
             )}
           >
             {item.label}
@@ -35,7 +35,7 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
         );
       })}
       <form action="/auth/signout" method="post" className="lg:hidden">
-        <button className="whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-300">Sign out</button>
+        <button className="whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-600">Sign out</button>
       </form>
     </nav>
   );

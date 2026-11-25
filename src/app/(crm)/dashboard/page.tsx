@@ -22,6 +22,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     supabase.from("bookings").select("*").order("created_at", { ascending: false }).limit(8),
     getTeam(supabase),
   ]);
+  const stageCounts = await Promise.all(
+    PIPELINE.map(async ([status]) => {
+      const { count } = await supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", status);
+      return count ?? 0;
+    }),
+  );
 
   const newLeads = must(newLeadsRes, "new requests") as Lead[];
   const awaiting = must(awaitingRes, "quotes") as Quote[];
@@ -53,6 +59,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <Stat label="Overdue follow-ups" value={overdue.length} href="/follow-ups" tone={overdue.length ? "red" : "slate"} hint={myOverdue ? `${myOverdue} assigned to you` : undefined} />
         <Stat label="Recent bookings" value={bookings.filter((b) => requestNow() - new Date(b.created_at).getTime() < 7 * 86400000).length} href="/bookings" tone="green" hint="last 7 days" />
       </div>
+
+      <nav aria-label="Pipeline" className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+        {PIPELINE.map(([status, label], i) => (
+          <Link
+            key={status}
+            href={`/leads?status=${status}`}
+            className="rounded-lg bg-white px-3 py-2 ring-1 ring-slate-200 hover:ring-brand-300"
+          >
+            <span className="block text-xs font-medium text-slate-500">{label}</span>
+            <span className="block font-display text-lg font-extrabold tabular-nums text-ink">{stageCounts[i]}</span>
+          </Link>
+        ))}
+      </nav>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <Card>
@@ -141,7 +160,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 <tbody className="divide-y divide-slate-100">
                   {bookings.map((b) => (
                     <tr key={b.id} className="hover:bg-slate-50">
-                      <td className={tdClass}><Link href={`/bookings/${b.id}`} className="font-medium text-slate-900 hover:underline">{b.snapshot.contact?.name}</Link><div className="font-mono text-xs text-slate-500">{b.reference} · {formatDate(b.created_at)}</div></td>
+                      <td className={tdClass}><Link href={`/bookings/${b.id}`} className="font-medium text-slate-900 hover:underline">{b.snapshot.contact?.name}</Link><div className="font-mono text-xs text-slate-500">{b.reference} · {formatDate(b.created_at, { year: undefined })}</div></td>
                       <td className={tdClass}>{b.snapshot.pickup.city}, {b.snapshot.pickup.state} → {b.snapshot.delivery.city}, {b.snapshot.delivery.state}</td>
                       <td className={tdClass}>{money(b.total_price)}</td>
                       <td className={tdClass}><ShipmentStatusBadge status={b.status} /></td>
@@ -157,17 +176,25 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   );
 }
 
+const PIPELINE = [
+  ["new", "New request"],
+  ["contacted", "Contacted"],
+  ["pricing", "Pricing"],
+  ["quote_sent", "Quote sent"],
+  ["booked", "Booked"],
+] as const;
+
 function greeting() {
   const h = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: "America/Los_Angeles" }).format(new Date()));
   return h < 12 ? "morning" : h < 17 ? "afternoon" : "evening";
 }
 
 function Stat({ label, value, href, tone, hint }: { label: string; value: number; href: string; tone: "blue" | "teal" | "red" | "green" | "slate"; hint?: string }) {
-  const color = { blue: "text-blue-700", teal: "text-teal-700", red: "text-red-700", green: "text-emerald-700", slate: "text-slate-900" }[tone];
+  const color = { blue: "text-blue-700", teal: "text-brand-700", red: "text-red-700", green: "text-emerald-700", slate: "text-slate-900" }[tone];
   return (
-    <Link href={href} className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-slate-300">
+    <Link href={href} className="rounded-xl bg-white p-4 shadow-xs ring-1 ring-slate-200 hover:ring-brand-300">
       <p className="text-sm font-medium text-slate-600">{label}</p>
-      <p className={`mt-1 text-3xl font-bold tabular-nums ${color}`}>{value}</p>
+      <p className={`mt-1 font-display text-3xl font-extrabold tabular-nums ${color}`}>{value}</p>
       {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}
     </Link>
   );

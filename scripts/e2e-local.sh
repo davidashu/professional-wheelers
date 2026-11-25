@@ -21,7 +21,7 @@ export SUPABASE_SERVICE_ROLE_KEY=$SERVICE
 export NEXT_PUBLIC_SITE_URL=http://localhost:3100
 export QUOTE_LINK_SECRET=local-quote-link-secret-0123456789abcdef
 export APP_SECRET=local-app-secret-0123456789abcdef-0123
-export COMPANY_NAME="Summit Auto Transport"
+export COMPANY_NAME="Professional Wheelers"
 unset RESEND_API_KEY EMAIL_FROM
 
 npx next build > /tmp/next-build.log 2>&1
