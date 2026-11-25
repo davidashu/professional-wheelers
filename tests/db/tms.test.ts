@@ -269,6 +269,36 @@ describe("invoices", () => {
   });
 });
 
+describe("paid vs customer paid", () => {
+  it("Paid means we paid the carrier; Customer paid means the customer paid us", async () => {
+    const load = await seedLoad(customerA, "2026-10", 1500, 1200, { carrier_id: carrierOk, customer_status: "delivered" });
+    await expect(
+      pool.query("update loads set customer_status = 'paid' where id = $1", [load.id]),
+    ).rejects.toThrow(/carrier has been paid/);
+
+    const inv = (await pool.query(
+      "insert into invoices (load_id, customer_id, amount, due_on) values ($1, $2, 1500, current_date + 15) returning id",
+      [load.id, customerA],
+    )).rows[0];
+    await pool.query("update loads set carrier_status = 'paid' where id = $1", [load.id]);
+    let st = await pool.query("select customer_status, carrier_paid_at from loads where id = $1", [load.id]);
+    expect(st.rows[0].customer_status).toBe("paid");
+    expect(st.rows[0].carrier_paid_at).not.toBeNull();
+
+    // The customer never sees the internal carrier-paid step.
+    const portal = await as(pool, user(portalUserA), async (c) =>
+      (await c.query("select customer_status from portal_loads() where id = $1", [load.id])).rows[0]);
+    expect(portal.customer_status).toBe("payment_due");
+    const hist = await as(pool, user(portalUserA), async (c) =>
+      (await c.query("select message from portal_load_history($1)", [load.id])).rows.map((r) => r.message as string));
+    expect(hist.some((m) => m.includes("Paid (carrier)"))).toBe(false);
+
+    await pool.query("update invoices set status = 'paid', paid_on = current_date where id = $1", [inv.id]);
+    st = await pool.query("select customer_status from loads where id = $1", [load.id]);
+    expect(st.rows[0].customer_status).toBe("customer_paid");
+  });
+});
+
 describe("customer portal", () => {
   it("shows the customer's loads without carrier pay or profit, and nothing from other customers", async () => {
     await seedLoad(customerB, "2026-10", 999, 100);

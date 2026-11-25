@@ -485,7 +485,7 @@ as $$
     when 'confirmed' then 'Confirmed' when 'dispatched' then 'Dispatched' when 'pickup_delayed' then 'Pick up delayed'
     when 'picked_up' then 'Picked up' when 'running_late' then 'Running late' when 'pod_received' then 'POD received'
     when 'pod_issue' then 'POD issue' when 'delivered' then 'Delivered' when 'invoiced' then 'Invoiced to customer'
-    when 'payment_due' then 'Payment due' when 'paid' then 'Paid' when 'customer_paid' then 'Customer paid'
+    when 'payment_due' then 'Payment due' when 'paid' then 'Paid (carrier)' when 'customer_paid' then 'Customer paid'
     when 'load_issue' then 'Load issue' when 'cancelled' then 'Cancelled'
   end;
 $$;
@@ -562,6 +562,15 @@ begin
   end if;
   if new.carrier_status = 'paid' then
     new.carrier_paid_at := coalesce(new.carrier_paid_at, now());
+    -- "Paid" on the customer bar means we paid the carrier; "Customer paid"
+    -- means the customer paid us. Paying the carrier first moves the bar to
+    -- Paid; it never moves a load back from Customer paid.
+    if new.customer_status in ('pod_received', 'delivered', 'invoiced', 'payment_due') then
+      new.customer_status := 'paid';
+    end if;
+  end if;
+  if new.customer_status = 'paid' and new.carrier_status <> 'paid' then
+    raise exception 'Paid means the carrier has been paid. Mark the carrier bar Paid first.' using errcode = 'P0001';
   end if;
 
   new.service_date := coalesce((new.delivered_at at time zone 'America/Denver')::date, new.pickup_date,
@@ -654,7 +663,7 @@ begin
     perform public.log_load_activity(new.load_id, new.customer_id, 'invoice_paid',
       'Invoice ' || new.invoice_number || ' marked paid');
   elsif new.status = 'void' and tg_op = 'UPDATE' and old.status <> 'void' then
-    update public.loads set customer_status = 'delivered'
+    update public.loads set customer_status = case when carrier_status = 'paid' then 'paid'::public.load_customer_status else 'delivered' end
     where id = new.load_id and customer_status in ('invoiced', 'payment_due', 'paid', 'customer_paid');
     perform public.log_load_activity(new.load_id, new.customer_id, 'invoice_void',
       'Invoice ' || new.invoice_number || ' voided');
@@ -960,7 +969,11 @@ as $$
   select l.id, l.load_number, l.customer_ref, l.equipment,
          l.origin_name, l.origin_city, l.origin_state, l.dest_name, l.dest_city, l.dest_state,
          l.pickup_date, l.delivery_date, l.picked_up_at, l.delivered_at,
-         l.customer_status, l.customer_rate,
+         case when l.customer_status = 'paid'
+              then case when exists (select 1 from public.invoices i where i.load_id = l.id and i.status = 'open')
+                        then 'payment_due'::public.load_customer_status else 'delivered'::public.load_customer_status end
+              else l.customer_status end,
+         l.customer_rate,
          coalesce((select jsonb_agg(jsonb_build_object('vin', v.vin, 'year', v.year, 'make', v.make, 'model', v.model) order by v.position)
                    from public.load_vehicles v where v.load_id = l.id), '[]'::jsonb),
          l.created_at
@@ -982,6 +995,8 @@ as $$
   where a.load_id = p_load_id
     and l.customer_id = public.current_customer_id()
     and a.kind in ('load_created', 'customer_status', 'invoice_issued', 'invoice_paid')
+    -- moves into or out of "Paid (carrier)" are internal
+    and not (a.kind = 'customer_status' and 'paid' in (a.metadata ->> 'from', a.metadata ->> 'to'))
   order by a.created_at;
 $$;
 

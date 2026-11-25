@@ -20,7 +20,7 @@ export const CUSTOMER_STATUS_LABEL: Record<CustomerStatus, string> = {
   delivered: "Delivered",
   invoiced: "Invoiced to customer",
   payment_due: "Payment due",
-  paid: "Paid",
+  paid: "Paid (carrier)",
   customer_paid: "Customer paid",
   load_issue: "Load issue",
   cancelled: "Cancelled",
@@ -39,7 +39,7 @@ export const CUSTOMER_PATH: CustomerStatus[] = [
 export const CUSTOMER_STEP_OF: Record<CustomerStatus, CustomerStatus> = {
   confirmed: "confirmed", dispatched: "dispatched", pickup_delayed: "dispatched", picked_up: "picked_up",
   running_late: "picked_up", pod_received: "delivered", pod_issue: "delivered", delivered: "delivered",
-  invoiced: "invoiced", payment_due: "invoiced", paid: "customer_paid", customer_paid: "customer_paid",
+  invoiced: "invoiced", payment_due: "invoiced", paid: "invoiced", customer_paid: "customer_paid",
   load_issue: "confirmed", cancelled: "confirmed",
 };
 export const CUSTOMER_PROBLEM: CustomerStatus[] = ["pickup_delayed", "running_late", "pod_issue", "payment_due", "load_issue"];
